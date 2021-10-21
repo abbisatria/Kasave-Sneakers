@@ -1,5 +1,5 @@
-import React from 'react'
-import { Link, Switch, Route } from 'react-router-dom'
+import React, { Suspense, useEffect, useState } from 'react'
+import { Link, Switch, Route, useHistory } from 'react-router-dom'
 import { Row, Col, Container, Navbar, NavLink } from 'reactstrap'
 import { Logo, MenuLogout, MenuOverview, MenuSetting, MenuTransaction } from '../../assets/icon'
 import Overview from './Overview'
@@ -7,17 +7,44 @@ import Transactions from './Transactions'
 import Settings from './Settings'
 import AddTransaction from './AddTransaction'
 import DetailTransaction from './DetailTransaction'
+import Fallback from '../../assets/img/fallback.gif'
 import './Home.scss'
+import Cookies from 'js-cookie'
+import jwtDecode from 'jwt-decode'
 
 const Home = () => {
+  const [user, setUser] = useState({
+    nama: '',
+    email: ''
+  })
+
+  const { push } = useHistory()
+
+  useEffect(() => {
+    const token = Cookies.get('token')
+    if (token) {
+      const jwtToken = atob(token)
+      const payload = jwtDecode(jwtToken)
+      const result = {
+        nama: payload.user.nama,
+        email: payload.user.email
+      }
+      setUser(result)
+    }
+  }, [])
+
+  const onLogout = () => {
+    Cookies.remove('token')
+    push('/login')
+  }
   return (
     <Container fluid className="p-4">
       <Row>
         <Col md={3} className="d-none d-md-block">
           <div className="user text-center mb-5">
             <Logo />
-            <h4 className="fw-bold m-0">Abbi Satria</h4>
-            <p>abbisatria@gmail.com</p>
+            <h4 className="fw-bold m-0">{user.nama}</h4>
+            <p>{user.email}</p>
           </div>
           <div className="px-3">
             <div className="menus">
@@ -54,8 +81,8 @@ const Home = () => {
               <div className="me-3">
                 <MenuLogout />
               </div>
-              <p className="item-title m-0">
-                <Link to="/">
+              <p className="item-title m-0" onClick={onLogout}>
+                <Link to="">
                   Logout
                 </Link>
               </p>
@@ -63,23 +90,37 @@ const Home = () => {
           </div>
         </Col>
         <Col md={9} lg={9} sm={12} xs={12}>
-          <Switch>
-            <Route exact path="/">
-              <Overview />
-            </Route>
-            <Route exact path="/transactions">
-              <Transactions />
-            </Route>
-            <Route path="/transactions/detail">
-              <DetailTransaction />
-            </Route>
-            <Route exact path="/transactions/add">
-              <AddTransaction />
-            </Route>
-            <Route exact path="/settings">
-              <Settings />
-            </Route>
-          </Switch>
+          <Suspense fallback={<div className="bg-fallback"><img src={Fallback} alt="animated" className="animated-gif" /></div>}>
+            <Switch>
+              <Route
+                exact
+                path="/"
+                name="Home"
+                render={(props) => <Overview {...props} />}
+              />
+              <Route
+                exact
+                path="/transactions"
+                name=""
+                render={(props) => <Transactions {...props} />}
+              />
+              <Route
+                path="/transactions/detail"
+                name=""
+                render={(props) => <DetailTransaction {...props} />}
+              />
+              <Route
+                path="/transactions/add"
+                name=""
+                render={(props) => <AddTransaction {...props} />}
+              />
+              <Route
+                path="/settings"
+                name=""
+                render={(props) => <Settings {...props} />}
+              />
+            </Switch>
+          </Suspense>
         </Col>
       </Row>
       <div className="d-lg-none d-md-none d-sm-block">
@@ -89,13 +130,13 @@ const Home = () => {
             Overview
           </NavLink>
           <NavLink href="/transactions" className="d-flex align-items-center">
-          <MenuTransaction />
+            <MenuTransaction />
             Transactions
           </NavLink>
           <NavLink href="/settings" className="d-flex align-items-center">
-          <MenuSetting />
+            <MenuSetting />
             Settings
-            </NavLink>
+          </NavLink>
         </Navbar>
       </div>
     </Container>
