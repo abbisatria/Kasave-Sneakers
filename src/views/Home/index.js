@@ -1,12 +1,14 @@
 import React, { Suspense, useEffect, useState } from 'react'
 import { Link, Switch, Route, useHistory } from 'react-router-dom'
 import { Row, Col, Container, Navbar, NavLink } from 'reactstrap'
-import { Logo, MenuLogout, MenuOverview, MenuSetting, MenuTransaction } from '../../assets/icon'
+import { Logo, MenuExpense, MenuLogout, MenuOverview, MenuSetting, MenuTransaction } from '../../assets/icon'
 import Overview from './Overview'
 import Transactions from './Transactions'
 import Settings from './Settings'
 import AddTransaction from './AddTransaction'
 import DetailTransaction from './DetailTransaction'
+import Expense from './Expense'
+import AddExpense from './AddExpense'
 import Fallback from '../../assets/img/fallback.gif'
 import './Home.scss'
 import Cookies from 'js-cookie'
@@ -69,6 +71,16 @@ const Home = () => {
             </div>
             <div className="menus">
               <div className="me-3">
+                <MenuExpense />
+              </div>
+              <p className="item-title m-0">
+                <Link to="/expense">
+                  Expense
+                </Link>
+              </p>
+            </div>
+            <div className="menus">
+              <div className="me-3">
                 <MenuSetting />
               </div>
               <p className="item-title m-0">
@@ -100,12 +112,23 @@ const Home = () => {
               />
               <Route
                 exact
+                path="/expense"
+                name=""
+                render={(props) => <Expense {...props} />}
+              />
+              <Route
+                path="/expense/:mode"
+                name=""
+                render={(props) => <AddExpense {...props} />}
+              />
+              <Route
+                exact
                 path="/transactions"
                 name=""
                 render={(props) => <Transactions {...props} />}
               />
               <Route
-                path="/transactions/detail"
+                path="/transactions/detail/:id"
                 name=""
                 render={(props) => <DetailTransaction {...props} />}
               />
@@ -127,15 +150,15 @@ const Home = () => {
         <Navbar color="light" light expand="md" fixed="bottom">
           <NavLink href="/" className="d-flex align-items-center">
             <MenuOverview />
-            Overview
           </NavLink>
           <NavLink href="/transactions" className="d-flex align-items-center">
             <MenuTransaction />
-            Transactions
+          </NavLink>
+          <NavLink href="/expense" className="d-flex align-items-center">
+            <MenuExpense />
           </NavLink>
           <NavLink href="/settings" className="d-flex align-items-center">
             <MenuSetting />
-            Settings
           </NavLink>
         </Navbar>
       </div>

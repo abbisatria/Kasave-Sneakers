@@ -1,9 +1,13 @@
-import React, { useState } from 'react'
-import { Button, Col, FormGroup, Input, Label, Row } from 'reactstrap'
+/* eslint-disable multiline-ternary */
+import React, { useCallback, useEffect, useState } from 'react'
+import { Button, Col, FormGroup, Input, Label, Row, Spinner } from 'reactstrap'
 import NumberFormat from 'react-number-format'
 import './AddTransaction.scss'
+import { getListCategory, getListTreatment, setCheckout } from '../../../services/transactions'
+import { toast } from 'react-toastify'
+import { useHistory } from 'react-router-dom'
 
-function AddTransaction () {
+const AddTransaction = () => {
   const [chooseCategory, setChooseCategory] = useState('')
   const [chooseSubCategory, setChooseSubCategory] = useState('')
   const [chooseOptional, setChooseOptional] = useState('')
@@ -14,123 +18,42 @@ function AddTransaction () {
   const [order, setOrder] = useState([])
   const [paid, setPaid] = useState('')
   const [discount, setDiscount] = useState('')
+  const [category, setCategory] = useState([])
+  const [optional, setOptional] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [loadingSubmit, setLoadingSubmit] = useState(false)
+  const [email, setEmail] = useState('')
 
-  const category = [
-    {
-      id: 1,
-      name: 'Sneakers',
-      sub_category: [
-        {
-          id: 1,
-          name: 'Regular Cleaning',
-          price: 20000
-        },
-        {
-          id: 2,
-          name: 'Deep Cleaning',
-          price: 30000
-        }
-      ]
-    },
-    {
-      id: 2,
-      name: 'Boots',
-      sub_category: [
-        {
-          id: 1,
-          name: 'S',
-          price: 35000
-        },
-        {
-          id: 2,
-          name: 'M',
-          price: 40000
-        },
-        {
-          id: 3,
-          name: 'L',
-          price: 40000
-        }
-      ]
-    },
-    {
-      id: 3,
-      name: 'Bags',
-      sub_category: [
-        {
-          id: 1,
-          name: 'S',
-          price: 25000
-        },
-        {
-          id: 2,
-          name: 'M',
-          price: 30000
-        },
-        {
-          id: 3,
-          name: 'L',
-          price: 35000
-        }
-      ]
-    },
-    {
-      id: 4,
-      name: 'Others',
-      sub_category: [
-        {
-          id: 1,
-          name: 'Flat Shoes',
-          price: 20000
-        },
-        {
-          id: 2,
-          name: 'Kid Shoes',
-          price: 20000
-        },
-        {
-          id: 3,
-          name: 'Walleet',
-          price: 25000
-        },
-        {
-          id: 4,
-          name: 'Belt',
-          price: 25000
-        },
-        {
-          id: 5,
-          name: 'Leather Jacket',
-          price: 50000
-        }
-      ]
+  const { push } = useHistory()
+
+  const getListCategoryAPI = useCallback(async () => {
+    setLoading(true)
+    const response = await getListCategory()
+    if (response.error) {
+      toast.error(response.message)
+    } else {
+      setCategory(response.results)
     }
-  ]
+    setLoading(false)
+  }, [])
 
-  const optional = [
-    {
-      id: 1,
-      name: 'Unyellowing',
-      price: 30000
-    },
-    {
-      id: 2,
-      name: 'Recolor',
-      price: 120000
-    },
-    {
-      id: 3,
-      name: 'Repair',
-      price: 0
-    },
-    {
-      id: 4,
-      name: 'Custom',
-      price: 0
+  const getListTreatmentAPI = useCallback(async () => {
+    setLoading(true)
+    const response = await getListTreatment()
+    if (response.error) {
+      toast.error(response.message)
+    } else {
+      setOptional(response.results)
     }
-  ]
+    setLoading(false)
+  }, [])
 
-  const total = oneDay ? category[Number(chooseCategory) - 1].sub_category.filter(item => item.id === Number(chooseSubCategory))[0].price + Number(priceOptional) + 10000 : ((chooseCategory && chooseSubCategory) ? category[Number(chooseCategory) - 1].sub_category.filter(item => item.id === Number(chooseSubCategory))[0].price + Number(priceOptional) : 0)
+  useEffect(() => {
+    getListCategoryAPI()
+    getListTreatmentAPI()
+  }, [])
+
+  const total = oneDay ? category.filter(val => val._id === chooseCategory)[0].sub_category.filter(item => item._id === chooseSubCategory)[0].price + Number(priceOptional) + 10000 : ((chooseCategory && chooseSubCategory) ? category.filter(val => val._id === chooseCategory)[0].sub_category.filter(item => item._id === chooseSubCategory)[0].price + Number(priceOptional) : 0)
 
   const reset = () => {
     setChooseCategory('')
@@ -145,14 +68,14 @@ function AddTransaction () {
 
   const submit = () => {
     setOrder([...order, {
-      category: category[Number(chooseCategory) - 1],
-      subCategory: category[Number(chooseCategory) - 1].sub_category.filter(item => item.id === Number(chooseSubCategory))[0],
+      category: category.filter(val => val._id === chooseCategory)[0],
+      subCategory: category.filter(val => val._id === chooseCategory)[0].sub_category.filter(item => item._id === chooseSubCategory)[0],
       name: nameItem,
-      treatment: optional.filter(val => val.id === Number(chooseOptional))[0],
+      treatment: optional.filter(val => val._id === chooseOptional)[0],
       priceTreatment: Number(priceOptional),
       description: description,
       oneDay: oneDay,
-      discount: discount,
+      discount: discount || 0,
       total: discount > 0 ? total * (Number(discount) / 100) : total
     }])
     reset()
@@ -160,7 +83,7 @@ function AddTransaction () {
 
   const initialValue = 0
 
-  const submitPrint = () => {
+  const submitPrint = async () => {
     const change = Number(paid) - order.reduce(function (total, currentValue) {
       return total + currentValue.total
     }, initialValue)
@@ -169,205 +92,262 @@ function AddTransaction () {
       return total + currentValue.total
     }, initialValue)
 
+    const item = order.map(val => {
+      return {
+        category: {
+          name: val.category.name
+        },
+        subCategory: {
+          name: val.subCategory.name,
+          price: val.subCategory.price
+        },
+        treatment: {
+          name: val?.treatment?.name ? val?.treatment?.name : '',
+          price: val.priceTreatment
+        },
+        name: val.name,
+        discount: val.discount,
+        description: val.description,
+        oneDay: val.oneDay,
+        total: val.total
+      }
+    })
+
     const payload = {
-      item: order,
+      item: item,
       total: total,
       paid: paid,
-      change: change
+      change: change,
+      email: email
     }
 
-    console.log(payload)
+    if (String(change)[0] === '-') {
+      toast.error('Pembayaran tidak boleh minus')
+    } else {
+      if (email) {
+        setLoadingSubmit(true)
+        const response = await setCheckout(payload)
+        if (response.error) {
+          setLoadingSubmit(false)
+          toast.error(response.message)
+        } else {
+          toast.success('Transaksi Berhasil')
+          setLoadingSubmit(false)
+          push('/transactions')
+        }
+      } else {
+        toast.error('Isi email terlebih dahulu')
+      }
+    }
   }
 
   return (
     <div className="mb-5">
       <h2 className="fw-bold mb-4">Add Transaction</h2>
-      <Row>
-        <Col lg={6} md={6} className="mb-5">
-          <FormGroup className="mb-3">
-            <Label>Select Category</Label>
-            <Input type="select" value={chooseCategory} className="rounded-pill mt-2" onChange={(e) => setChooseCategory(e.target.value)}>
-              <option value="">Choose One</option>
-              {category.map(val => {
-                return (
-                  <option key={String(val.id)} value={val.id}>{val.name}</option>
-                )
-              })}
-            </Input>
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label>Select Sub Category</Label>
-            <Input type="select" className="rounded-pill mt-2" disabled={chooseCategory === ''} onChange={(e) => setChooseSubCategory(e.target.value)}>
-              <option value="">Choose One</option>
-              {chooseCategory !== ''
-                ? category.filter(val => val.id === Number(chooseCategory))[0].sub_category.map(item => {
-                  return (
-                    <option key={String(item.id)} value={item.id}>{item.name}</option>
-                  )
-                })
-                : null}
-            </Input>
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label>Name Item</Label>
-            <Input type="text" placeholder="Enter your name item" className="rounded-pill mt-2" value={nameItem} onChange={(e) => setNameItem(e.target.value)} />
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label className="mb-2">Treatment (Optional)</Label>
-            <div className="d-flex" style={{ overflow: 'auto' }}>
-              {optional.map(val => {
-                return (
-                  <FormGroup check className="me-3" key={String(val.id)}>
-                    <Label check>
-                      <Input type="radio" value={val.id} checked={val.id === Number(chooseOptional)} onChange={(e) => {
-                        setChooseOptional(e.target.value)
-                        setPriceOptional(val.price)
-                      }} /> {' '}
-                      {val.name}
-                    </Label>
-                  </FormGroup>
-                )
-              })}
-            </div>
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label>Price Treatment</Label>
-            <NumberFormat
-              value={priceOptional}
-              prefix="Rp. "
-              displayType="input"
-              className="form-control rounded-pill"
-              onValueChange={(val) => setPriceOptional(val.value)}
-              placeholder="Enter your price treatment"
-              thousandSeparator="."
-              decimalSeparator=","
-            />
-            {/* <Input type="number" placeholder="Enter your description" className="rounded-pill mt-2" value={priceOptional} onChange={(e) => setPriceOptional(e.target.value)} /> */}
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label>Discount</Label>
-            <Input type="number" placeholder="Enter your description" className="rounded-pill mt-2" value={discount} onChange={(e) => setDiscount(e.target.value)} />
-          </FormGroup>
-          <FormGroup className="mb-3">
-            <Label>Description (Optional)</Label>
-            <Input type="text" placeholder="Enter your description" className="rounded-pill mt-2" value={description} onChange={(e) => setDescription(e.target.value)} />
-          </FormGroup>
-          <FormGroup check className="mb-3">
-            <Label check>
-              <Input type="checkbox" checked={oneDay} onChange={(e) => setOneDay(!oneDay)} />{' '}
-              One day service
-            </Label>
-          </FormGroup>
-          <Button color="primary" type="button" className="rounded-pill w-100" onClick={() => submit()} disabled={chooseCategory === '' || chooseSubCategory === '' || nameItem === ''}>Add to bill - {discount > 0 ? total * (discount / 100) : total}</Button>
-        </Col>
-        <Col lg={6} md={6}>
-          <div className="card-order">
-            <h5>Order Summary</h5>
-            <hr />
-            {order.length > 0
-              ? order.map((val, idx) => {
-                return (
-                  <div className="mb-1" key={String(idx)}>
-                    <h6>{val.name}</h6>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <p>{val.subCategory.name}</p>
-                      <p>
-                        <NumberFormat
-                          value={val.subCategory.price}
-                          prefix="Rp. "
-                          displayType="text"
-                          thousandSeparator="."
-                          decimalSeparator=","
-                        />
-                      </p>
-                    </div>
-                    {val.treatment && (
-                      <div className="d-flex justify-content-between align-items-center">
-                        <p>{val.treatment.name}</p>
-                        <p>
-                          <NumberFormat
-                            value={val.treatment.price}
-                            prefix="Rp. "
-                            displayType="text"
-                            thousandSeparator="."
-                            decimalSeparator=","
-                          />
-                        </p>
-                      </div>
-                    )}
-                    <div className="d-flex justify-content-between align-items-center">
-                      <p>Discount</p>
-                      <p>{val.discount}%</p>
-                    </div>
-                    {val.oneDay && (
-                      <div className="d-flex justify-content-between align-items-center">
-                        <p>One day service</p>
-                        <p>
-                          <NumberFormat
-                            value="10000"
-                            prefix="Rp. "
-                            displayType="text"
-                            thousandSeparator="."
-                            decimalSeparator=","
-                          />
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )
-              })
-              : <p>No orders yet</p>}
-            <hr />
-            <div className="d-flex justify-content-between align-items-center">
-              <p>Total</p>
-              <p>
-                <NumberFormat
-                  value={order.reduce(function (total, currentValue) {
-                    return total + currentValue.total
-                  }, initialValue)}
-                  prefix="Rp. "
-                  displayType="text"
-                  thousandSeparator="."
-                  decimalSeparator=","
-                />
-              </p>
-            </div>
+      {loading ? (
+        <div className="d-flex justify-content-center">
+          <Spinner size="lg" color="dark" />
+        </div>
+      ) : (
+        <Row>
+          <Col lg={6} md={6} className="mb-5">
             <FormGroup className="mb-3">
-              <Label>Paid</Label>
+              <Label>Select Category</Label>
+              <Input type="select" value={chooseCategory} className="rounded-pill mt-2" onChange={(e) => setChooseCategory(e.target.value)}>
+                <option value="">Choose One</option>
+                {category.map(val => {
+                  return (
+                    <option key={String(val._id)} value={val._id}>{val.name}</option>
+                  )
+                })}
+              </Input>
+            </FormGroup>
+            <FormGroup className="mb-3">
+              <Label>Select Sub Category</Label>
+              <Input type="select" className="rounded-pill mt-2" disabled={chooseCategory === ''} onChange={(e) => setChooseSubCategory(e.target.value)}>
+                <option value="">Choose One</option>
+                {chooseCategory !== ''
+                  ? category.filter(val => val._id === chooseCategory)[0].sub_category.map(item => {
+                    return (
+                      <option key={String(item._id)} value={item._id}>{item.name}</option>
+                    )
+                  })
+                  : null}
+              </Input>
+            </FormGroup>
+            <FormGroup className="mb-3">
+              <Label>Name Item</Label>
+              <Input type="text" placeholder="Enter your name item" className="rounded-pill mt-2" value={nameItem} onChange={(e) => setNameItem(e.target.value)} />
+            </FormGroup>
+            <FormGroup className="mb-3">
+              <Label className="mb-2">Treatment (Optional)</Label>
+              <div className="d-flex" style={{ overflow: 'auto' }}>
+                {optional.map(val => {
+                  return (
+                    <FormGroup check className="me-3" key={String(val._id)}>
+                      <Label check>
+                        <Input type="radio" value={val._id} checked={val._id === chooseOptional} onChange={(e) => {
+                          setChooseOptional(e.target.value)
+                          setPriceOptional(val.price)
+                        }} /> {' '}
+                        {val.name}
+                      </Label>
+                    </FormGroup>
+                  )
+                })}
+              </div>
+            </FormGroup>
+            <FormGroup className="mb-3">
+              <Label>Price Treatment</Label>
               <NumberFormat
-                value={paid}
+                value={priceOptional}
                 prefix="Rp. "
                 displayType="input"
                 className="form-control rounded-pill"
-                onValueChange={(val) => setPaid(val.value)}
-                placeholder="Enter your paid"
+                onValueChange={(val) => setPriceOptional(val.value)}
+                placeholder="Enter your price treatment"
                 thousandSeparator="."
                 decimalSeparator=","
               />
-              {/* <Input type="number" placeholder="Enter your paid" className="rounded-pill mt-2" value={paid} onChange={(e) => setPaid(e.target.value)} /> */}
             </FormGroup>
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <p>Change</p>
-              <p>
+            <FormGroup className="mb-3">
+              <Label>Discount</Label>
+              <Input type="number" placeholder="Enter your description" className="rounded-pill mt-2" value={discount} onChange={(e) => setDiscount(e.target.value)} />
+            </FormGroup>
+            <FormGroup className="mb-3">
+              <Label>Description (Optional)</Label>
+              <Input type="text" placeholder="Enter your description" className="rounded-pill mt-2" value={description} onChange={(e) => setDescription(e.target.value)} />
+            </FormGroup>
+            <FormGroup check className="mb-3">
+              <Label check>
+                <Input type="checkbox" checked={oneDay} onChange={(e) => setOneDay(!oneDay)} />{' '}
+                One day service
+              </Label>
+            </FormGroup>
+            <Button color="primary" type="button" className="rounded-pill w-100" onClick={() => submit()} disabled={chooseCategory === '' || chooseSubCategory === '' || nameItem === ''}>Add to bill - {discount > 0 ? total * (discount / 100) : total}</Button>
+          </Col>
+          <Col lg={6} md={6}>
+            <div className="card-order">
+              <h5>Order Summary</h5>
+              <hr />
+              {order.length > 0
+                ? order.map((val, idx) => {
+                  return (
+                    <div className="mb-1" key={String(idx)}>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <h6>{val.name}</h6>
+                        <div style={{ cursor: 'pointer' }} onClick={() => {
+                          const filter = order.filter((value, index) => idx !== index)
+                          setOrder(filter)
+                        }}>
+                        <i className="fa fa-trash" style={{ color: 'red' }} />
+                        </div>
+                      </div>
+                      <div className="d-flex justify-content-between align-items-center">
+                        <p>{val.subCategory.name}</p>
+                        <p>
+                          <NumberFormat
+                            value={val.subCategory.price}
+                            prefix="Rp. "
+                            displayType="text"
+                            thousandSeparator="."
+                            decimalSeparator=","
+                          />
+                        </p>
+                      </div>
+                      {val.treatment && (
+                        <div className="d-flex justify-content-between align-items-center">
+                          <p>{val.treatment.name}</p>
+                          <p>
+                            <NumberFormat
+                              value={val.priceTreatment}
+                              prefix="Rp. "
+                              displayType="text"
+                              thousandSeparator="."
+                              decimalSeparator=","
+                            />
+                          </p>
+                        </div>
+                      )}
+                      {val.oneDay && (
+                        <div className="d-flex justify-content-between align-items-center">
+                          <p>One day service</p>
+                          <p>
+                            <NumberFormat
+                              value="10000"
+                              prefix="Rp. "
+                              displayType="text"
+                              thousandSeparator="."
+                              decimalSeparator=","
+                            />
+                          </p>
+                        </div>
+                      )}
+                      <div className="d-flex justify-content-between align-items-center">
+                        <p>Discount</p>
+                        <p>{val.discount}%</p>
+                      </div>
+                    </div>
+                  )
+                })
+                : <p>No orders</p>}
+              <hr />
+              <div className="d-flex justify-content-between align-items-center">
+                <p>Total</p>
+                <p>
+                  <NumberFormat
+                    value={order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue)}
+                    prefix="Rp. "
+                    displayType="text"
+                    thousandSeparator="."
+                    decimalSeparator=","
+                  />
+                </p>
+              </div>
+              <FormGroup className="mb-2">
+                <Label>Paid</Label>
                 <NumberFormat
-                  value={Number(paid) - order.reduce(function (total, currentValue) {
-                    return total + currentValue.total
-                  }, initialValue)}
+                  value={paid}
                   prefix="Rp. "
-                  displayType="text"
+                  displayType="input"
+                  className="form-control rounded-pill"
+                  onValueChange={(val) => setPaid(val.value)}
+                  placeholder="Enter your paid"
                   thousandSeparator="."
                   decimalSeparator=","
                 />
-              </p>
+              </FormGroup>
+              <FormGroup className="mb-3">
+                <Label>Email</Label>
+                <Input type="text" placeholder="Enter your email" className="rounded-pill mt-2" value={email} onChange={(e) => setEmail(e.target.value)} />
+              </FormGroup>
+              <div className="d-flex justify-content-between align-items-center mb-3">
+                <p>Change</p>
+                <p>
+                  <NumberFormat
+                    value={Number(paid) - order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue)}
+                    prefix="Rp. "
+                    displayType="text"
+                    thousandSeparator="."
+                    decimalSeparator=","
+                  />
+                </p>
+              </div>
+              {loadingSubmit ? (
+                <div className="d-flex justify-content-center">
+                  <Spinner size="lg" color="dark" />
+                </div>
+              ) : (
+                <Button type="button" color="primary" className="rounded-pill w-100" onClick={() => submitPrint()} hidden={order.length < 1}>Save Bill</Button>
+              )}
             </div>
-            <div className="d-flex justify-content-between align-items-center">
-              <Button type="button" color="primary" className="rounded-pill w-100" onClick={() => submitPrint()}>Print Bill</Button>
-              <div style={{ width: 36 }} />
-              <Button color="secondary" className="rounded-pill w-100">Save Bill</Button>
-            </div>
-          </div>
-        </Col>
-      </Row>
+          </Col>
+        </Row>
+      )}
     </div>
   )
 }
