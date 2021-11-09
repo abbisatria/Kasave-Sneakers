@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import NumberFormat from 'react-number-format'
 import { Button, Col, Input, InputGroup, Row, Spinner, Table } from 'reactstrap'
 import { useHistory } from 'react-router-dom'
-import { getListExpense } from '../../../services/transactions'
+import { deleteExpense, getListExpense } from '../../../services/transactions'
 import { toast } from 'react-toastify'
 import Pagination from 'react-js-pagination'
 
@@ -62,6 +62,18 @@ const Expense = () => {
 
   const handleChangePage = (page) => {
     setPage(page)
+  }
+
+  const deleteExpenseById = async (id) => {
+    setLoading(true)
+    const response = await deleteExpense(id)
+    if (response.error) {
+      toast.error(response.message)
+      setLoading(false)
+    } else {
+      toast.success('Delete Data Berhasil')
+      await getListExpenseSubmit()
+    }
   }
 
   return (
@@ -148,7 +160,7 @@ const Expense = () => {
                                   <Button className="mx-2" color="primary" type="button" onClick={() => push('/expense/edit', { id: val._id })}>
                                     <i className="fa fa-edit" />
                                   </Button>
-                                  <Button color="danger" type="button" onClick={null}>
+                                  <Button color="danger" type="button" onClick={() => deleteExpenseById(val._id)}>
                                     <i className="fa fa-trash" />
                                   </Button>
                                 </td>
