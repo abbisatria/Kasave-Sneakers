@@ -86,10 +86,12 @@ const DetailTransaction = () => {
                         <p>Rp. 10.000</p>
                       </div>
                     )}
-                    <div className="d-flex justify-content-between align-items-center">
+                    {val.discount > 0 && (
+                      <div className="d-flex justify-content-between align-items-center">
                         <p>Discount</p>
                         <p>{val.discount ? val.discount : 0}%</p>
                       </div>
+                    )}
                     {val.description && (
                       <div className="d-flex justify-content-between align-items-center">
                         <p>Description</p>
@@ -100,6 +102,10 @@ const DetailTransaction = () => {
                 )
               })}
               <div className="mb-1">
+                <div className="d-flex justify-content-between align-items-center">
+                  <p>Dicsount</p>
+                  <p>{data.discount ? data.discount : 0}%</p>
+                </div>
                 <div className="d-flex justify-content-between align-items-center">
                   <p>Total</p>
                   <p>

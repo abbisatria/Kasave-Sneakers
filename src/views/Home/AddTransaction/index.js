@@ -18,6 +18,7 @@ const AddTransaction = () => {
   const [order, setOrder] = useState([])
   const [paid, setPaid] = useState('')
   const [discount, setDiscount] = useState('')
+  const [totDiscount, setTotDicsount] = useState('')
   const [category, setCategory] = useState([])
   const [optional, setOptional] = useState([])
   const [loading, setLoading] = useState(false)
@@ -84,11 +85,19 @@ const AddTransaction = () => {
   const initialValue = 0
 
   const submitPrint = async () => {
-    const change = Number(paid) - order.reduce(function (total, currentValue) {
+    const change = Number(paid) - totDiscount > 0 ? order.reduce(function (total, currentValue) {
       return total + currentValue.total
-    }, initialValue)
+    }, initialValue) - (order.reduce(function (total, currentValue) {
+      return total + currentValue.total
+    }, initialValue) * (totDiscount / 100)) : (order.reduce(function (total, currentValue) {
+      return total + currentValue.total
+    }, initialValue))
 
-    const total = order.reduce(function (total, currentValue) {
+    const total = totDiscount > 0 ? order.reduce(function (total, currentValue) {
+      return total + currentValue.total
+    }, initialValue) - (order.reduce(function (total, currentValue) {
+      return total + currentValue.total
+    }, initialValue) * (totDiscount / 100)) : order.reduce(function (total, currentValue) {
       return total + currentValue.total
     }, initialValue)
 
@@ -118,7 +127,8 @@ const AddTransaction = () => {
       total: total,
       paid: paid,
       change: change,
-      email: email
+      email: email,
+      discount: totDiscount || 0
     }
 
     if (String(change)[0] === '-') {
@@ -186,9 +196,22 @@ const AddTransaction = () => {
                   return (
                     <FormGroup check className="me-3" key={String(val._id)}>
                       <Label check>
-                        <Input type="radio" value={val._id} checked={val._id === chooseOptional} onChange={(e) => {
-                          setChooseOptional(e.target.value)
-                          setPriceOptional(val.price)
+                        <Input type="radio" value={val._id} checked={val._id === chooseOptional} onClick={(e) => {
+                          if (val._id === chooseOptional) {
+                            setChooseOptional('')
+                            setPriceOptional('')
+                          } else {
+                            setChooseOptional(e.target.value)
+                            setPriceOptional(val.price)
+                          }
+                        }} onChange={(e) => {
+                          if (val._id === chooseOptional) {
+                            setChooseOptional('')
+                            setPriceOptional('')
+                          } else {
+                            setChooseOptional(e.target.value)
+                            setPriceOptional(val.price)
+                          }
                         }} /> {' '}
                         {val.name}
                       </Label>
@@ -208,9 +231,10 @@ const AddTransaction = () => {
                 placeholder="Enter your price treatment"
                 thousandSeparator="."
                 decimalSeparator=","
+                disabled={!chooseOptional}
               />
             </FormGroup>
-            <FormGroup className="mb-3">
+            <FormGroup className="mb-3" hidden>
               <Label>Discount</Label>
               <Input type="number" placeholder="Enter your description" className="rounded-pill mt-2" value={discount} onChange={(e) => setDiscount(e.target.value)} />
             </FormGroup>
@@ -224,7 +248,7 @@ const AddTransaction = () => {
                 One day service
               </Label>
             </FormGroup>
-            <Button color="primary" type="button" className="rounded-pill w-100" onClick={() => submit()} disabled={chooseCategory === '' || chooseSubCategory === '' || nameItem === ''}>Add to bill - {discount > 0 ? total * (discount / 100) : total}</Button>
+            <Button color="primary" type="button" className="rounded-pill w-100" onClick={() => submit()} disabled={chooseCategory === '' || chooseSubCategory === '' || nameItem === ''}>Add to bill - {discount > 0 ? total - (total * (discount / 100)) : total}</Button>
           </Col>
           <Col lg={6} md={6}>
             <div className="card-order">
@@ -292,11 +316,19 @@ const AddTransaction = () => {
                 })
                 : <p>No orders</p>}
               <hr />
+              <FormGroup className="mb-2">
+                <Label>Discount</Label>
+                <Input type="number" placeholder="Enter your description" className="rounded-pill mt-2" value={totDiscount} onChange={(e) => setTotDicsount(e.target.value)} />
+              </FormGroup>
               <div className="d-flex justify-content-between align-items-center">
                 <p>Total</p>
                 <p>
                   <NumberFormat
-                    value={order.reduce(function (total, currentValue) {
+                    value={totDiscount > 0 ? order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue) - (order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue) * (totDiscount / 100)) : order.reduce(function (total, currentValue) {
                       return total + currentValue.total
                     }, initialValue)}
                     prefix="Rp. "
@@ -327,9 +359,13 @@ const AddTransaction = () => {
                 <p>Change</p>
                 <p>
                   <NumberFormat
-                    value={Number(paid) - order.reduce(function (total, currentValue) {
+                    value={Number(paid) - (totDiscount > 0 ? order.reduce(function (total, currentValue) {
                       return total + currentValue.total
-                    }, initialValue)}
+                    }, initialValue) - (order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue) * (totDiscount / 100)) : order.reduce(function (total, currentValue) {
+                      return total + currentValue.total
+                    }, initialValue))}
                     prefix="Rp. "
                     displayType="text"
                     thousandSeparator="."
