@@ -113,33 +113,33 @@ const Home = () => {
               <Route
                 exact
                 path="/expense"
-                name=""
+                name="Expense"
                 render={(props) => <Expense {...props} />}
               />
               <Route
                 path="/expense/:mode"
-                name=""
+                name="Expense"
                 render={(props) => <AddExpense {...props} />}
               />
               <Route
                 exact
                 path="/transactions"
-                name=""
+                name="Transaction"
                 render={(props) => <Transactions {...props} />}
               />
               <Route
                 path="/transactions/detail/:id"
-                name=""
+                name="Transaction"
                 render={(props) => <DetailTransaction {...props} />}
               />
               <Route
                 path="/transactions/add"
-                name=""
+                name="Transaction"
                 render={(props) => <AddTransaction {...props} />}
               />
               <Route
                 path="/settings"
-                name=""
+                name="Settings"
                 render={(props) => <Settings {...props} />}
               />
             </Switch>
