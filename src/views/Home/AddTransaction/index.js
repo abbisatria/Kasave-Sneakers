@@ -85,11 +85,11 @@ const AddTransaction = () => {
   const initialValue = 0
 
   const submitPrint = async () => {
-    const change = Number(paid) - totDiscount > 0 ? order.reduce(function (total, currentValue) {
+    const change = Number(paid) - (totDiscount > 0 ? (order.reduce(function (total, currentValue) {
       return total + currentValue.total
     }, initialValue) - (order.reduce(function (total, currentValue) {
       return total + currentValue.total
-    }, initialValue) * (totDiscount / 100)) : (order.reduce(function (total, currentValue) {
+    }, initialValue) * (totDiscount / 100))) : order.reduce(function (total, currentValue) {
       return total + currentValue.total
     }, initialValue))
 
@@ -359,11 +359,11 @@ const AddTransaction = () => {
                 <p>Change</p>
                 <p>
                   <NumberFormat
-                    value={Number(paid) - (totDiscount > 0 ? order.reduce(function (total, currentValue) {
+                    value={Number(paid) - (totDiscount > 0 ? (order.reduce(function (total, currentValue) {
                       return total + currentValue.total
                     }, initialValue) - (order.reduce(function (total, currentValue) {
                       return total + currentValue.total
-                    }, initialValue) * (totDiscount / 100)) : order.reduce(function (total, currentValue) {
+                    }, initialValue) * (totDiscount / 100))) : order.reduce(function (total, currentValue) {
                       return total + currentValue.total
                     }, initialValue))}
                     prefix="Rp. "
