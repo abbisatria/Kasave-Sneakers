@@ -59,6 +59,21 @@
   }
 }
 
+.active-menu {
+  .item-title {
+    color: #4D17E2;
+    a {
+      color: #4D17E2;
+    }
+  }
+  svg {
+    path {
+      transition: all 0.2s linear;
+      stroke: #4D17E2;
+    }
+  }
+}
+
 .btn-primary {
   background-color: #4D17E2;
 }

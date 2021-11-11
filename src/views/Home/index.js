@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState } from 'react'
-import { Link, Switch, Route, useHistory } from 'react-router-dom'
+import { Link, Switch, Route, useHistory, useLocation } from 'react-router-dom'
 import { Row, Col, Container, Navbar, NavLink } from 'reactstrap'
 import { Logo, MenuExpense, MenuLogout, MenuOverview, MenuSetting, MenuTransaction } from '../../assets/icon'
 import Overview from './Overview'
@@ -39,6 +39,9 @@ const Home = () => {
     Cookies.remove('token')
     push('/login')
   }
+
+  const { pathname } = useLocation()
+
   return (
     <Container fluid className="p-4">
       <Row>
@@ -49,7 +52,7 @@ const Home = () => {
             <p>{user.email}</p>
           </div>
           <div className="px-3">
-            <div className="menus">
+            <div className={pathname === '/' ? 'menus active-menu' : 'menus'}>
               <div className="me-3">
                 <MenuOverview />
               </div>
@@ -59,7 +62,7 @@ const Home = () => {
                 </Link>
               </p>
             </div>
-            <div className="menus">
+            <div className={pathname.search('/transactions') === 0 ? 'menus active-menu' : 'menus'}>
               <div className="me-3">
                 <MenuTransaction />
               </div>
@@ -69,7 +72,7 @@ const Home = () => {
                 </Link>
               </p>
             </div>
-            <div className="menus">
+            <div className={pathname.search('/expense') === 0 ? 'menus active-menu' : 'menus'}>
               <div className="me-3">
                 <MenuExpense />
               </div>
@@ -79,7 +82,7 @@ const Home = () => {
                 </Link>
               </p>
             </div>
-            <div className="menus">
+            <div className={pathname === '/settings' ? 'menus active-menu' : 'menus'}>
               <div className="me-3">
                 <MenuSetting />
               </div>
@@ -148,17 +151,21 @@ const Home = () => {
       </Row>
       <div className="d-lg-none d-md-none d-sm-block">
         <Navbar color="light" light expand="md" fixed="bottom">
-          <NavLink href="/" className="d-flex align-items-center">
+          <NavLink href="/" className={pathname === '/' ? 'active-menu d-flex flex-column align-items-center' : 'd-flex flex-column align-items-center'}>
             <MenuOverview />
+            <p className="item-title">Overview</p>
           </NavLink>
-          <NavLink href="/transactions" className="d-flex align-items-center">
+          <NavLink href="/transactions" className={pathname.search('/transactions') === 0 ? 'active-menu d-flex flex-column align-items-center' : 'd-flex flex-column align-items-center'}>
             <MenuTransaction />
+            <p className="item-title">Transaction</p>
           </NavLink>
-          <NavLink href="/expense" className="d-flex align-items-center">
+          <NavLink href="/expense" className={pathname.search('/expense') === 0 ? 'active-menu d-flex flex-column align-items-center' : 'd-flex flex-column align-items-center'}>
             <MenuExpense />
+            <p className="item-title">Expense</p>
           </NavLink>
-          <NavLink href="/settings" className="d-flex align-items-center">
+          <NavLink href="/settings" className={pathname === '/settings' ? 'active-menu d-flex flex-column align-items-center' : 'd-flex flex-column align-items-center'}>
             <MenuSetting />
+            <p className="item-title">Settings</p>
           </NavLink>
         </Navbar>
       </div>
