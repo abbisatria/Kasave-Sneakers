@@ -1,4 +1,6 @@
 .navbar {
+  padding-top: 0;
+  padding-bottom: 0;
   a {
     svg {
       margin-right: 5px !important;
@@ -72,6 +74,10 @@
       stroke: #4D17E2;
     }
   }
+}
+
+.item-title {
+  margin-bottom: 0;
 }
 
 .btn-primary {
